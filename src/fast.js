@@ -1,7 +1,7 @@
-const puppeteer = require("puppeteer-extra"); // ^3.2.3
-const StealthPlugin = require("puppeteer-extra-plugin-stealth"); // ^2.9.0
-const UserAgent = require("user-agents"); // ^1.0.958
-const logger = require("./logger");
+import puppeteer from "puppeteer";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import UserAgent from "user-agents";
+import logger from "./logger";
 
 puppeteer.use(StealthPlugin());
 
