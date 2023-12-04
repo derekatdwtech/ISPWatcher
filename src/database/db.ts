@@ -1,101 +1,78 @@
-import { sqlite3 } from "sqlite3";
-import logger from "../logger";
+import { Database } from "sqlite3";
+import logger from '../logger';
+import { exit } from "process";
+import { Config } from "../config/config";
+import * as kConfig from './knexfile';
+import Knex from 'knex';
 
-class Database {
-  file;
+export default class DBContext {
+  private file;
 
-  constructor(path) {
-    this.file = path;
-    this.init();
+  constructor() {
+    const config = Config;
+    switch (config.db.type) {
+      case 'sqlite':
+        this.file = config.db.filename;
+        this.initSqlite();
+    }
   }
 
-  init() {
+  private initSqlite() {
     logger.info("Initializing Database");
-    new sqlite3.Database(`${this.file}`, sqlite3.OPEN_READWRITE, (err) => {
-      if (err && err.code == "SQLITE_CANTOPEN") {
-        logger.info(`Database file ${this.file} not found.`);
-        this.createDatabase();
-        return;
-      } else if (err) {
-        logger.error("Getting error " + err);
+    const db = new Database(this.file, (err) => {
+      if (err && err.name == "SQLITE_CANTOPEN") {
+        logger.error(`Failed to create or open sqlite file ${this.file}. Error ${err.message}`);
         exit(1);
       }
     });
   }
 
-  getDb() {
-    return new sqlite3.Database(
-      `${this.file}`,
-      sqlite3.OPEN_READWRITE,
-      (err) => {
-        if (err) {
-          logger.info(err);
-          exit(1);
-        }
-      }
-    );
+  public GetConnection() {
+    return new Database(this.file);
   }
 
-  createDatabase() {
-    logger.info("Creating database");
-    var newDb = new sqlite3.Database(`${this.file}`, (err) => {
-      if (err) {
-        logger.error(err);
-        exit(1);
-      }
-
-      this.createTables(newDb);
-    });
+  public MigrateDatabase() {
+    const knex = Knex(kConfig[Config.environment]);
+    try {
+      logger.info('Updating database schema.');
+      knex.migrate.latest();
+    }
+    catch (e) {
+      logger.error('Failed to update database. Rolling back changes...');
+      knex.migrate.rollback();
+    }
   }
 
-  createTables(db) {
-    logger.info("Creating new database tables");
+//   insertTestResult(test_date, speed_result) {
+//     var db = this.getDb();
 
-    db.exec(`
-        CREATE TABLE results (
-            id INTEGER primary key autoincrement,
-            test_date datetime default current_timestamp not null,
-            speed_result decimal(20, 20) not null
-        );
+//     db.run(
+//       `
+//         
+//     `,
+//       [test_date, speed_result],
+//       (err) => {
+//         if (err) {
+//           return logger.error(err);
+//         }
+//       }
+//     );
+//   }
 
-        CREATE TABLE failures (
-            id INTEGER primary key autoincrement,
-            test_date datetime default current_timestamp not null,
-            error_message TEXT NOT NULL
-        )
-    `);
-  }
+//   insertErrorTestResult(test_date, error) {
+//     var db = this.getDb();
 
-  insertTestResult(test_date, speed_result) {
-    var db = this.getDb();
-
-    db.run(
-      `
-        INSERT INTO results (test_date, speed_result) VALUES (?, ?);
-    `,
-      [test_date, speed_result],
-      (err) => {
-        if (err) {
-          return logger.error(err);
-        }
-      }
-    );
-  }
-
-  insertErrorTestResult(test_date, error) {
-    var db = this.getDb();
-
-    db.run(
-      `
-        INSERT INTO failures (test_date, error_message) VALUES (?, ?);
-    `,
-      [test_date, error],
-      (err) => {
-        if (err) {
-          return logger.error(err);
-        }
-      }
-    );
-  }
-}
-module.exports = Database;
+//     db.run(
+//       `
+//         INSERT INTO failures (test_date, error_message) VALUES (?, ?);
+//     `,
+//       [test_date, error],
+//       (err) => {
+//         if (err) {
+//           return logger.error(err);
+//         }
+//       }
+//     );
+//   }
+ }
+module.exports = DBContext;

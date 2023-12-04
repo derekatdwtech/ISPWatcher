@@ -1,6 +1,6 @@
-var satelize = require("satelize");
-var fetch = require("node-fetch");
-var logger = require("./logger");
+import satelize from 'satelize';
+import { fetch } from 'node-fetch';
+var logger = require("./logger")
 
 const getIpAddress = async () => {
   return await fetch("https://ipecho.io/json")

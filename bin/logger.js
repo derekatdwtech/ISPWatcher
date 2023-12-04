@@ -11,4 +11,5 @@ const logger = createLogger({
     format: combine(label({ label: CATEGORY }), timestamp(), customFormat),
     transports: [new transports.Console()],
 });
+
 module.exports = logger;

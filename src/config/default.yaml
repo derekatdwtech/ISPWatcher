@@ -1,0 +1,4 @@
+environment: "development"
+db:
+  type: "sqlite"
+  filename: 'speedtest.db'

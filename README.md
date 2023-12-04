@@ -11,5 +11,6 @@ I strongly recommend you run this on a device that is always on and connected to
 This software runs on any machine that suports the following:
 1. NodeJS 18.x
 2. Docker (Future Version)
+3. chromium-browser (App dependency)
 
 ## Installation
